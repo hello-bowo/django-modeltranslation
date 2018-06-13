@@ -396,7 +396,7 @@ var google, django, gettext;
             var grouper = new TranslationFieldGrouper({
                 $fields: $('.mt').filter(
                     'input, textarea, select, iframe, div'
-                ).filter(':parents(.tabular)').filter(':parents(.djn-empty-form)')
+                ).filter(':parents(.tabular)').filter(':parents(.djn-empty-form), .s3direct')
             });
             MainSwitch.init(grouper.groupedTranslations, createTabs(grouper.groupedTranslations));
 
