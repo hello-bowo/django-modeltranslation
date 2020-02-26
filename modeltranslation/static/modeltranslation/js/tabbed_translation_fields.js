@@ -218,7 +218,7 @@ var google, django, gettext;
             this.getAllGroupedTranslations = function () {
                 var grouper = new TranslationFieldGrouper({
                     $fields: this.$table.find('.mt').filter(
-                        'input, textarea, select')
+                        'input, textarea, select, div')
                 });
                 //this.requiredColumns = this.getRequiredColumns();
                 this.initTable();
@@ -237,7 +237,7 @@ var google, django, gettext;
                 // The table header requires special treatment. In case an inline
                 // is declared with extra=0, the translation fields are not visible.
                 var thGrouper = new TranslationFieldGrouper({
-                    $fields: this.$table.find('.mt').filter('input, textarea, select')
+                    $fields: this.$table.find('.mt').filter('input, textarea, select, div')
                 });
                 this.translationColumns = this.getTranslationColumns(thGrouper.groupedTranslations);
 
@@ -290,9 +290,13 @@ var google, django, gettext;
 
         function handleTabularAddAnotherInline(tabularInlineGroup) {
             tabularInlineGroup.$table.find('.add-row a').click(function () {
+                els = $(this).parent().parent().prev().prev().find('.mt');
+                if (els.length == 0) {
+                    els = $(this).parent().parent().parent().prev().prev().find('.mt');
+                }
                 var tabs = createTabularTabs(
-                    tabularInlineGroup.getGroupedTranslations(
-                        $(this).parent().parent().prev().prev().find('.mt')));
+                    tabularInlineGroup.getGroupedTranslations(els)
+                );
                 // Update the main switch as it is not aware of the newly created tabs
                 MainSwitch.update(tabs);
                 // Activate the language tab selected in the main switch
@@ -400,18 +404,23 @@ var google, django, gettext;
             // Group normal fields and fields in (existing) stacked inlines
             var grouper = new TranslationFieldGrouper({
                 $fields: $('.mt').filter(
-                    'input, textarea, select, iframe, div').filter(':parents(.tabular)').filter(':parents(.empty-form)')
+                    'input, textarea, select, iframe, div').filter(':parents(.tabular), :parents(.djn-tabular)').filter(':parents(.empty-form)')
             });
             MainSwitch.init(grouper.groupedTranslations, createTabs(grouper.groupedTranslations));
 
             // Note: The add another functionality in admin is injected through inline javascript,
             // here we have to run after that (and after all other ready events just to be sure).
             $(document).ready(function() {
-                $(window).on('load', function() {
+                if (document.readyState === "complete") {
                     handleAddAnotherInline();
-                });
+                } else {
+                    $(window).on('load', function() {
+                        handleAddAnotherInline();
+                    });
+                }
             });
 
+            $(document).ready(function() {
             // Group fields in (existing) tabular inlines
             $('div.inline-group > div.tabular').each(function () {
                 var tabularInlineGroup = new TabularInlineGroup({
@@ -420,10 +429,15 @@ var google, django, gettext;
                 MainSwitch.update(
                     createTabularTabs(tabularInlineGroup.getAllGroupedTranslations()));
 
-                $(document).ready(function() {
-                    $(window).on('load', function() {
+                    if (document.readyState === "complete") {
+                        console.log('adding inline handler ready')
                         handleTabularAddAnotherInline(tabularInlineGroup);
-                    });
+                    } else {
+                        $(window).on('load', function() {
+                            console.log('adding inline handler onload')
+                            handleTabularAddAnotherInline(tabularInlineGroup);
+                        });
+                    }
                 });
             });
         }
